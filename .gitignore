@@ -1,0 +1,27 @@
+# Node / Next
+node_modules/
+.next/
+out/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env / local data
+.env
+frontend/.env
+cache.db
+*.log
+
+# Generated content
+posters/
+image_cache/
+deep_dive_images/
+deep_dive_articles/
+daily_results_*.json
+
+# OS / editor
+.DS_Store
+.vscode/
