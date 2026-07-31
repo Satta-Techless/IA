@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -129,11 +130,13 @@ export default function Home() {
                         Top 5
                       </span>
                     </div>
-                    <img
+                    <Image
                       src={`${API_BASE}/api/poster/${posterFilename}`}
                       alt={`${subcat} poster`}
                       className="w-full aspect-[1/1.4] object-cover bg-slate-900"
-                      loading="lazy"
+                      width={1000}
+                      height={1400}
+                      unoptimized
                     />
                     <div className="p-3">
                       <a
