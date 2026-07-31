@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -12,14 +13,15 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 BASE_DIR = Path(__file__).resolve().parent.parent
 POSTERS_DIR = BASE_DIR / "posters"
 DEEP_DIVE_DIR = BASE_DIR / "deep_dive_articles"
+SAFE_FILENAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 def _safe_file_path(base_dir: Path, filename: str):
-    candidate = (base_dir / filename).resolve()
-    if candidate.parent != base_dir.resolve():
+    if not SAFE_FILENAME_PATTERN.fullmatch(filename):
         return None
-    if not candidate.is_file():
+    if not base_dir.exists():
         return None
-    return candidate
+    files_by_name = {path.name: path for path in base_dir.iterdir() if path.is_file()}
+    return files_by_name.get(filename)
 
 @app.on_event("startup")
 def startup():
