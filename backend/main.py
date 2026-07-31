@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
@@ -9,6 +9,17 @@ import uvicorn
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+BASE_DIR = Path(__file__).resolve().parent.parent
+POSTERS_DIR = BASE_DIR / "posters"
+DEEP_DIVE_DIR = BASE_DIR / "deep_dive_articles"
+
+def _safe_file_path(base_dir: Path, filename: str):
+    candidate = (base_dir / filename).resolve()
+    if candidate.parent != base_dir.resolve():
+        return None
+    if not candidate.is_file():
+        return None
+    return candidate
 
 @app.on_event("startup")
 def startup():
@@ -32,16 +43,16 @@ async def refresh(background_tasks: BackgroundTasks):
 
 @app.get("/api/poster/{filename}")
 def poster(filename: str):
-    path = f"posters/{filename}"
-    if os.path.exists(path):
-        return FileResponse(path, media_type="image/png", filename=filename)
+    safe_path = _safe_file_path(POSTERS_DIR, filename)
+    if safe_path:
+        return FileResponse(safe_path, media_type="image/png", filename=safe_path.name)
     return JSONResponse({"error": "not found"}, 404)
 
 @app.get("/api/deep-dive/{filename}")
 def deep_dive(filename: str):
-    path = f"deep_dive_articles/{filename}"
-    if os.path.exists(path):
-        return FileResponse(path, media_type="application/json", filename=filename)
+    safe_path = _safe_file_path(DEEP_DIVE_DIR, filename)
+    if safe_path:
+        return FileResponse(safe_path, media_type="application/json", filename=safe_path.name)
     return JSONResponse({"error": "not found"}, 404)
 
 if __name__ == "__main__":

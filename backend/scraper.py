@@ -1,8 +1,9 @@
-import os
-import re
+import datetime
+import json
 import time
 import requests
 import feedparser
+from urllib.parse import parse_qs, unquote, urlparse
 from newspaper import Article as NewspaperArticle
 from typing import List, Dict
 from .cache import is_url_processed
@@ -36,14 +37,22 @@ class WideScopeScraper:
         }
 
     def _clean_google_url(self, url: str) -> str:
-        if 'news.google.com' in url and 'url?q=' in url:
-            match = re.search(r'url\?q=([^&]+)', url)
-            if match:
-                return match.group(1)
+        parsed = urlparse(url)
+        if parsed.netloc == "news.google.com":
+            query_params = parse_qs(parsed.query)
+            for key in ("url", "q"):
+                candidate = query_params.get(key, [None])[0]
+                if not candidate:
+                    continue
+                decoded = unquote(candidate).strip()
+                parsed_candidate = urlparse(decoded)
+                if parsed_candidate.scheme in {"http", "https"} and parsed_candidate.netloc:
+                    return decoded
         return url
-
+ 
     def _is_paywalled(self, url: str) -> bool:
-        return any(d in url for d in PAYWALLED_DOMAINS)
+        hostname = urlparse(url).hostname or ""
+        return any(hostname == d or hostname.endswith(f".{d}") for d in PAYWALLED_DOMAINS)
 
     def fetch_articles(self, subcategory: str, limit: int = 150) -> List[Dict]:
         query = self.query_map.get(subcategory, subcategory.replace('_', ' '))
